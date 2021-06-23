@@ -95,6 +95,11 @@ var uploadCmd = &cobra.Command{
 			if err != nil {
 				return nil, err
 			}
+		case "rfc3161":
+			entry, err = CreateRFC3161FromPFlags()
+			if err != nil {
+				return nil, err
+			}
 		default:
 			return nil, errors.New("unknown type specified")
 		}
@@ -138,6 +143,10 @@ func verifyLogEntry(ctx context.Context, rekorClient *client.Rekor, logEntry mod
 		return false, nil
 	}
 	// verify the entry
+	if logEntry.Verification.SignedEntryTimestamp == nil {
+		return false, fmt.Errorf("signature missing")
+	}
+
 	le := &models.LogEntryAnon{
 		IntegratedTime: logEntry.IntegratedTime,
 		LogIndex:       logEntry.LogIndex,
