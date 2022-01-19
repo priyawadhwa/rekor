@@ -25,7 +25,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/client_golang v1.12.0
 	github.com/rs/cors v1.7.0
 	github.com/sassoftware/relic v7.2.1+incompatible
 	github.com/sigstore/sigstore v0.0.0-20210415112811-cb2061113e4a
@@ -39,7 +39,7 @@ require (
 	go.uber.org/zap v1.16.0
 	gocloud.dev v0.23.0
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
-	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
 	google.golang.org/genproto v0.0.0-20210506142907-4a47615972c2
