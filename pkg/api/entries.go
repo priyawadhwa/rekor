@@ -183,7 +183,14 @@ func createLogEntry(params entries.CreateLogEntryParams) (models.LogEntry, middl
 	metricNewEntries.Inc()
 
 	queuedLeaf := resp.getAddResult.QueuedLeaf.Leaf
-	uuid := hex.EncodeToString(queuedLeaf.GetMerkleLeafHash())
+
+	hexEncodedHash := hex.EncodeToString(queuedLeaf.GetMerkleLeafHash())
+	entryID, err := sharding.CreateEntryIDFromParts(fmt.Sprintf("%x", tc.logID), hexEncodedHash)
+	if err != nil {
+		err := fmt.Errorf("error creating EntryID from active treeID and uuid %v: %w", hexEncodedHash, err)
+		return nil, handleRekorAPIError(params, http.StatusInternalServerError, err, fmt.Sprintf(validationError, err))
+	}
+	uuid := entryID.ReturnEntryIDString()
 
 	logEntryAnon := models.LogEntryAnon{
 		LogID:          swag.String(api.pubkeyHash),
@@ -215,7 +222,7 @@ func createLogEntry(params entries.CreateLogEntryParams) (models.LogEntry, middl
 				log.RequestIDLogger(params.HTTPRequest).Infof("no attestation for %s", uuid)
 				return
 			}
-			if err := storeAttestation(context.Background(), uuid, attestation); err != nil {
+			if err := storeAttestation(context.Background(), entryID.UUID, attestation); err != nil {
 				log.RequestIDLogger(params.HTTPRequest).Errorf("error storing attestation: %s", err)
 			}
 		}()
