@@ -90,7 +90,10 @@ func NewAPI(ranges sharding.LogRanges) (*API, error) {
 		ranges.Ranges = append(ranges.Ranges, sharding.LogRange{TreeID: t.TreeId})
 	} else {
 		// append the manually specified treeID to the API's logRangeMap for lookups
+		log.Logger.Infof("Appending: ", ranges.Ranges)
 		ranges.Ranges = append(ranges.Ranges, sharding.LogRange{TreeID: tLogID})
+		log.Logger.Infof("Appended: ", ranges.Ranges)
+
 	}
 
 	rekorSigner, err := signer.New(ctx, viper.GetString("rekor_server.signer"))

@@ -76,6 +76,7 @@ func (l *LogRangesFlag) Set(s string) error {
 	l.Ranges = sharding.LogRanges{
 		Ranges: inputRanges,
 	}
+	fmt.Println("GOT RANGES: ", inputRanges)
 	return nil
 }
 
