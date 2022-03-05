@@ -222,10 +222,7 @@ func TestGet(t *testing.T) {
 	out := runCli(t, "upload", "--artifact", artifactPath, "--signature", sigPath, "--public-key", pubPath)
 	outputContains(t, out, "Created entry at")
 
-	uuid, err := sharding.GetUUIDFromIDString(getUUIDFromUploadOutput(t, out))
-	if err != nil {
-		t.Error(err)
-	}
+	uuid := getUUIDFromUploadOutput(t, out)
 
 	// since we at least have 1 valid entry, check the log at index 0
 	runCli(t, "get", "--log-index", "0")
@@ -261,13 +258,7 @@ func TestGet(t *testing.T) {
 	outputContains(t, out, uuid)
 
 	// Exercise GET with the new EntryID (TreeID + UUID)
-	out = runCli(t, "loginfo")
-	tidStr := strings.TrimSpace(strings.Split(out, "TreeID: ")[1])
-	tid, err := strconv.ParseInt(tidStr, 10, 64)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-	entryID, err := sharding.CreateEntryIDFromParts(fmt.Sprintf("%x", tid), uuid)
+	entryID, err := sharding.CreateEntryIDFromParts("0", uuid)
 	if err != nil {
 		t.Error(err)
 	}
