@@ -129,7 +129,21 @@ services:
       start_period: 5s
 EOF
 
+# Spin up the new Rekor
+
 docker-compose -f $COMPOSE_FILE up  -d
 sleep 15
 rekor-cli loginfo --rekor_server http://localhost:3000
 
+# Make sure we are pointing to the new tree now
+TREE_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json)
+# Check that the SHARD_TREE_ID is a substring of the `rekor-cli loginfo` output
+if [[ "$TREE_ID" == *"$SHARD_TREE_ID"* ]]; then
+  echo "Rekor server is now pointing to the new shard"
+else
+  echo "Rekor server is not pointing to the new shard"
+  exit 1
+fi
+
+
+echo "Test passed successfully :)"
