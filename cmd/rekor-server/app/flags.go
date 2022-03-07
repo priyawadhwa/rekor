@@ -36,7 +36,7 @@ func (l *LogRangesFlag) Set(s string) error {
 
 	// Only go up to the second to last one, the last one is special cased beow
 	for _, r := range ranges[:len(ranges)-1] {
-		split := strings.SplitN(r, "=", 2)
+		split := strings.Split(r, "=")
 		if len(split) != 2 {
 			return fmt.Errorf("invalid range flag, expected two parts separated by an =, got %s", r)
 		}

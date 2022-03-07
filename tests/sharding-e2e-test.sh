@@ -51,6 +51,8 @@ echo
 
 # rekor-cli loginfo should work
 rekor-cli loginfo --rekor_server http://localhost:3000
+CURRENT_TREE_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json | jq -r .TreeID)
+echo "current Tree ID is $CURRENT_TREE_ID"
 
 
 # Add some things to the tlog :)
@@ -108,6 +110,7 @@ services:
       "--enable_attestation_storage",
       "--attestation_storage_bucket=file:///var/run/attestations",
       "--trillian_log_server.tlog_id=$SHARD_TREE_ID",
+      "--trillian_log_server.log_id_ranges="$CURRENT_ID=3,$SHARD_TREE_ID""
       # Uncomment this for production logging
       # "--log_type=prod",
       ]
