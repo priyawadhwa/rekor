@@ -28,7 +28,6 @@ type LogRangesFlag struct {
 }
 
 func (l *LogRangesFlag) Set(s string) error {
-	fmt.Println("Setting", s)
 	ranges := strings.Split(s, ",")
 	l.Ranges = sharding.LogRanges{}
 
@@ -37,7 +36,7 @@ func (l *LogRangesFlag) Set(s string) error {
 
 	// Only go up to the second to last one, the last one is special cased beow
 	for _, r := range ranges[:len(ranges)-1] {
-		split := strings.Split(r, "=")
+		split := strings.SplitN(r, "=", 2)
 		if len(split) != 2 {
 			return fmt.Errorf("invalid range flag, expected two parts separated by an =, got %s", r)
 		}
@@ -77,7 +76,6 @@ func (l *LogRangesFlag) Set(s string) error {
 	l.Ranges = sharding.LogRanges{
 		Ranges: inputRanges,
 	}
-	fmt.Println("GOT RANGES: ", inputRanges)
 	return nil
 }
 

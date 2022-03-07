@@ -149,8 +149,7 @@ var logInfoCmd = &cobra.Command{
 				}
 				log.CliLogger.Infof("Persisted log state matches the current state of the log")
 			} else if persistedSize > sth.Size {
-				fmt.Println("~~~~~~~~~~~ TODO DOES NOT WORK ~~~~~~~~~~~~~~~~")
-				// return nil, fmt.Errorf("current size of tree reported from server %d is less than previously persisted state %d", sth.Size, persistedSize)
+				return nil, fmt.Errorf("current size of tree reported from server %d is less than previously persisted state %d", sth.Size, persistedSize)
 			}
 		} else {
 			log.CliLogger.Infof("No previous log state stored, unable to prove consistency")

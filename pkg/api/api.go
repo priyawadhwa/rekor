@@ -79,8 +79,6 @@ func NewAPI(ranges sharding.LogRanges) (*API, error) {
 	logClient := trillian.NewTrillianLogClient(tConn)
 
 	tLogID := viper.GetInt64("trillian_log_server.tlog_id")
-	log.Logger.Infof("TLOG ID: %v", tLogID)
-
 	if tLogID == 0 {
 		t, err := createAndInitTree(ctx, logAdminClient, logClient)
 		if err != nil {

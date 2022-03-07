@@ -47,8 +47,8 @@ done
 echo
 
 # rekor-cli loginfo should work
-rekor-cli loginfo --rekor_server http://localhost:3000
-CURRENT_TREE_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json | jq -r .TreeID)
+rekor-cli loginfo --rekor_server http://localhost:3000 --store_tree_state=false
+CURRENT_TREE_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json --store_tree_state=false | jq -r .TreeID)
 echo "current Tree ID is $CURRENT_TREE_ID"
 
 
@@ -70,8 +70,7 @@ SHARD_TREE_ID=$(createtree --admin_server localhost:8090)
 echo "the new shard ID is $SHARD_TREE_ID"
 
 # Once more
-rm ~/.rekor/state.json || true
-rekor-cli loginfo --rekor_server http://localhost:3000
+rekor-cli loginfo --rekor_server http://localhost:3000 --store_tree_state=false
 
 # Spin down the rekor server
 echo "stopping the rekor server..."
@@ -127,10 +126,11 @@ EOF
 
 docker-compose -f $COMPOSE_FILE up  -d
 sleep 15
-rekor-cli loginfo --rekor_server http://localhost:3000
+# TODO: priyawadhwa@ remove --store_tree_state=false once rekor-cli loginfo is aware of shards
+rekor-cli loginfo --rekor_server http://localhost:3000 --store_tree_state=false
 
 # Make sure we are pointing to the new tree now
-TREE_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json)
+TREE_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json --store_tree_state=false)
 # Check that the SHARD_TREE_ID is a substring of the `rekor-cli loginfo` output
 if [[ "$TREE_ID" == *"$SHARD_TREE_ID"* ]]; then
   echo "Rekor server is now pointing to the new shard"
