@@ -16,9 +16,6 @@
 
 set -ex
 
-# Things to spin up first:
-# - mariadb
-
 # Things to install first:
 # - jq, createtree
 
@@ -146,8 +143,7 @@ fi
 # from Shard 0
 rekor-cli get --log-index 2 --rekor_server http://localhost:3000
 
-# Try to get the entry via Entry ID (Tree ID in hex + UUID)
+# TODO: Try to get the entry via Entry ID (Tree ID in hex + UUID)
 UUID=$(rekor-cli get --log-index 2 --rekor_server http://localhost:3000 --format json | jq -r .UUID)
-
 
 echo "Test passed successfully :)"
