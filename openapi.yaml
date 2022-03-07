@@ -584,6 +584,7 @@ definitions:
       treeID:
         type: string
         description: The current treeID
+        pattern: '^[0-9]+$'
     required:
       - rootHash
       - treeSize

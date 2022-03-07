@@ -67,12 +67,6 @@ cd ../..
 rekor-cli get --log-index 2 --rekor_server http://localhost:3000
 
 # Now, we want to shard the log.
-# Get the current Tree ID
-CURRENT_ID=$(rekor-cli loginfo --rekor_server http://localhost:3000  --format json | jq -r .TreeID)
-echo "current Tree ID is $CURRENT_ID"
-
-
-
 # Create a new tree
 echo "creating a new Tree ID...."
 SHARD_TREE_ID=$(createtree --admin_server localhost:8090)
@@ -110,7 +104,7 @@ services:
       "--enable_attestation_storage",
       "--attestation_storage_bucket=file:///var/run/attestations",
       "--trillian_log_server.tlog_id=$SHARD_TREE_ID",
-      "--trillian_log_server.log_id_ranges="$CURRENT_ID=3,$SHARD_TREE_ID""
+      "--trillian_log_server.log_id_ranges=\"$CURRENT_TREE_ID=3,$SHARD_TREE_ID\""
       # Uncomment this for production logging
       # "--log_type=prod",
       ]
