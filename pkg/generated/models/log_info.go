@@ -46,7 +46,7 @@ type LogInfo struct {
 
 	// The current treeID
 	// Required: true
-	TreeID *int64 `json:"treeID"`
+	TreeID *string `json:"treeID"`
 
 	// The current number of nodes in the merkle tree
 	// Required: true
