@@ -28,6 +28,7 @@ type LogRangesFlag struct {
 }
 
 func (l *LogRangesFlag) Set(s string) error {
+	fmt.Println("Setting", s)
 	ranges := strings.Split(s, ",")
 	l.Ranges = sharding.LogRanges{}
 

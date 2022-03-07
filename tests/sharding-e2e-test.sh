@@ -104,7 +104,7 @@ services:
       "--enable_attestation_storage",
       "--attestation_storage_bucket=file:///var/run/attestations",
       "--trillian_log_server.tlog_id=$SHARD_TREE_ID",
-      "--trillian_log_server.log_id_ranges=\"$CURRENT_TREE_ID=3,$SHARD_TREE_ID\""
+      "--trillian_log_server.log_id_ranges=$CURRENT_TREE_ID=3,$SHARD_TREE_ID"
       # Uncomment this for production logging
       # "--log_type=prod",
       ]
@@ -145,6 +145,9 @@ fi
 # Now, if we run rekor-cli get --log_index 2 again, it should grab the log index
 # from Shard 0
 rekor-cli get --log-index 2 --rekor_server http://localhost:3000
+
+# Try to get the entry via Entry ID (Tree ID in hex + UUID)
+UUID=$(rekor-cli get --log-index 2 --rekor_server http://localhost:3000 --format json | jq -r .UUID)
 
 
 echo "Test passed successfully :)"
