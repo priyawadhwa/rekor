@@ -88,12 +88,9 @@ func NewAPI(ranges sharding.LogRanges) (*API, error) {
 		}
 		tLogID = t.TreeId
 		log.Logger.Infof("Creating new tree with ID: %v", t.TreeId)
-		// append the newly created treeID to the API's logRangeMap for lookups
-		ranges.Ranges = append(ranges.Ranges, sharding.LogRange{TreeID: t.TreeId})
-	} else {
-		// append the manually specified treeID to the API's logRangeMap for lookups
-		ranges.Ranges = append(ranges.Ranges, sharding.LogRange{TreeID: tLogID})
 	}
+	// append the active treeID to the API's logRangeMap for lookups
+	ranges.Ranges = append(ranges.Ranges, sharding.LogRange{TreeID: tLogID})
 
 	rekorSigner, err := signer.New(ctx, viper.GetString("rekor_server.signer"))
 	if err != nil {

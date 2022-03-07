@@ -145,5 +145,9 @@ else
   exit 1
 fi
 
+# Now, if we run rekor-cli get --log_index 2 again, it should grab the log index
+# from Shard 0
+rekor-cli get --log-index 2 --rekor_server http://localhost:3000
+
 
 echo "Test passed successfully :)"
