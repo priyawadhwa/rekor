@@ -36,6 +36,11 @@ import (
 func GetLogInfoHandler(params tlog.GetLogInfoParams) middleware.Responder {
 	tc := NewTrillianClient(params.HTTPRequest.Context())
 
+	// for each inactive shard, get the loginfo
+	for _, shard := range tc.ranges.Ranges {
+		fmt.Println("TODO: ", shard)
+	}
+
 	resp := tc.getLatest(0)
 	if resp.status != codes.OK {
 		return handleRekorAPIError(params, http.StatusInternalServerError, fmt.Errorf("grpc error: %w", resp.err), trillianCommunicationError)
