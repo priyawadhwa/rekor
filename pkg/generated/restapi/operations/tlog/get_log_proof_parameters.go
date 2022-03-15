@@ -70,6 +70,7 @@ type GetLogProofParams struct {
 	*/
 	LastSize int64
 	/*The tree ID of the tree that you wish to prove consistency for
+	  Pattern: ^[0-9]+$
 	  In: query
 	*/
 	TreeID *string
@@ -198,6 +199,20 @@ func (o *GetLogProofParams) bindTreeID(rawData []string, hasKey bool, formats st
 		return nil
 	}
 	o.TreeID = &raw
+
+	if err := o.validateTreeID(formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateTreeID carries on validations for parameter TreeID
+func (o *GetLogProofParams) validateTreeID(formats strfmt.Registry) error {
+
+	if err := validate.Pattern("treeID", "query", *o.TreeID, `^[0-9]+$`); err != nil {
+		return err
+	}
 
 	return nil
 }

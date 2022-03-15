@@ -128,6 +128,7 @@ paths:
         - in: query
           name: treeID
           type: string
+          pattern: '^[0-9]+$'
           description: The tree ID of the tree that you wish to prove consistency for
       responses:
         200:
