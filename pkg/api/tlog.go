@@ -16,6 +16,7 @@
 package api
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -37,8 +38,17 @@ func GetLogInfoHandler(params tlog.GetLogInfoParams) middleware.Responder {
 	tc := NewTrillianClient(params.HTTPRequest.Context())
 
 	// for each inactive shard, get the loginfo
-	for _, shard := range tc.ranges.Ranges {
-		fmt.Println("TODO: ", shard)
+	var inactiveShards []*models.InactiveShardLogInfo
+	for _, shard := range tc.ranges.GetRanges() {
+		if shard.TreeID == tc.ranges.ActiveTreeID() {
+			break
+		}
+		// Get details for this inactive shard
+		is, err := inactiveShardLogInfo(params.HTTPRequest.Context(), shard.TreeID)
+		if err != nil {
+			return handleRekorAPIError(params, http.StatusInternalServerError, fmt.Errorf("inactive shard error: %w", err), unexpectedInactiveShardError)
+		}
+		inactiveShards = append(inactiveShards, is)
 	}
 
 	resp := tc.getLatest(0)
@@ -82,9 +92,54 @@ func GetLogInfoHandler(params tlog.GetLogInfoParams) middleware.Responder {
 		TreeSize:       &treeSize,
 		SignedTreeHead: &scString,
 		TreeID:         stringPointer(fmt.Sprintf("%d", tc.logID)),
+		InactiveShards: inactiveShards,
 	}
 
 	return tlog.NewGetLogInfoOK().WithPayload(&logInfo)
+}
+
+func inactiveShardLogInfo(ctx context.Context, tid int64) (*models.InactiveShardLogInfo, error) {
+	tc := NewTrillianClientFromTreeID(ctx, tid)
+	resp := tc.getLatest(0)
+	if resp.status != codes.OK {
+		return nil, fmt.Errorf("resp code is not OK")
+	}
+	result := resp.getLatestResult
+
+	root := &types.LogRootV1{}
+	if err := root.UnmarshalBinary(result.SignedLogRoot.LogRoot); err != nil {
+		return nil, err
+	}
+
+	hashString := hex.EncodeToString(root.RootHash)
+	treeSize := int64(root.TreeSize)
+
+	sth, err := util.CreateSignedCheckpoint(util.Checkpoint{
+		Origin: "Rekor",
+		Size:   root.TreeSize,
+		Hash:   root.RootHash,
+	})
+	if err != nil {
+		return nil, err
+	}
+	sth.SetTimestamp(uint64(time.Now().UnixNano()))
+
+	// sign the log root ourselves to get the log root signature
+	if _, err := sth.Sign(viper.GetString("rekor_server.hostname"), api.signer, options.WithContext(ctx)); err != nil {
+		return nil, err
+	}
+
+	scBytes, err := sth.SignedNote.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	m := models.InactiveShardLogInfo{
+		RootHash:       &hashString,
+		TreeSize:       &treeSize,
+		TreeID:         stringPointer(fmt.Sprintf("%d", tid)),
+		SignedTreeHead: stringPointer(string(scBytes)),
+	}
+	return &m, nil
 }
 
 func stringPointer(s string) *string {

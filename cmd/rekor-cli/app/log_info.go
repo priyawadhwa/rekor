@@ -21,20 +21,23 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-openapi/swag"
 	"github.com/google/trillian/merkle/logverifier"
 	"github.com/google/trillian/merkle/rfc6962"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/sigstore/rekor/cmd/rekor-cli/app/format"
 	"github.com/sigstore/rekor/cmd/rekor-cli/app/state"
 	"github.com/sigstore/rekor/pkg/client"
+	rclient "github.com/sigstore/rekor/pkg/generated/client"
+
 	"github.com/sigstore/rekor/pkg/generated/client/tlog"
+	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/rekor/pkg/log"
 	"github.com/sigstore/rekor/pkg/util"
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -45,18 +48,6 @@ type logInfoCmdOutput struct {
 	RootHash       string
 	TimestampNanos uint64
 	TreeID         string
-}
-
-func (l *logInfoCmdOutput) String() string {
-	// Verification is always successful if we return an object.
-	ts := time.Unix(0, int64(l.TimestampNanos)).UTC().Format(time.RFC3339)
-
-	return fmt.Sprintf(`Verification Successful!
-Tree Size: %v
-Root Hash: %s
-Timestamp: %s
-TreeID:    %s
-`, l.TreeSize, l.RootHash, ts, l.TreeID)
 }
 
 // logInfoCmd represents the current information about the transparency log
@@ -79,91 +70,144 @@ var logInfoCmd = &cobra.Command{
 		}
 
 		logInfo := result.GetPayload()
-
-		sth := util.SignedCheckpoint{}
-		if err := sth.UnmarshalText([]byte(*logInfo.SignedTreeHead)); err != nil {
-			return nil, err
+		if err := verifyInactiveShards(rekorClient, logInfo, serverURL); err != nil {
+			return nil, errors.Wrap(err, "verifying inactive sahrds")
 		}
+		return verifyActiveTree(rekorClient, logInfo, serverURL)
+	}),
+}
 
-		publicKey := viper.GetString("rekor_server_public_key")
-		if publicKey == "" {
-			// fetch key from server
-			keyResp, err := rekorClient.Pubkey.GetPublicKey(nil)
+func verifyInactiveShards(rekorClient *rclient.Rekor, logInfo *models.LogInfo, serverURL string) error {
+	for _, shard := range logInfo.InactiveShards {
+		signedTreeHead := swag.StringValue(shard.SignedTreeHead)
+		treeID := swag.StringValue(shard.TreeID)
+		if err := verifyTree(rekorClient, signedTreeHead, treeID, serverURL); err != nil {
+			return errors.Wrapf(err, "verifying shard %s", treeID)
+		}
+	}
+	return nil
+}
+
+func verifyTree(rekorClient *rclient.Rekor, signedTreeHead, treeID, serverURL string) error {
+	if treeID != "" {
+		log.CliLogger.Infof("Verifying tree with ID %s...", treeID)
+	}
+	sth := util.SignedCheckpoint{}
+	if err := sth.UnmarshalText([]byte(signedTreeHead)); err != nil {
+		return err
+	}
+	verifier, err := loadVerifier(rekorClient, treeID)
+	if err != nil {
+		return err
+	}
+	if !sth.Verify(verifier) {
+		return errors.New("signature on tree head did not verify")
+	}
+	oldState := state.LoadTreeID(treeID)
+	if oldState == nil {
+		oldState = state.Load(serverURL)
+	}
+	if oldState != nil {
+		persistedSize := oldState.Size
+		if persistedSize < sth.Size {
+			log.CliLogger.Infof("Found previous log state, proving consistency between %d and %d", oldState.Size, sth.Size)
+			params := tlog.NewGetLogProofParams()
+			firstSize := int64(persistedSize)
+			params.FirstSize = &firstSize
+			params.LastSize = int64(sth.Size)
+			proof, err := rekorClient.Tlog.GetLogProof(params)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			publicKey = keyResp.Payload
-		}
-
-		block, _ := pem.Decode([]byte(publicKey))
-		if block == nil {
-			return nil, errors.New("failed to decode public key of server")
-		}
-
-		pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-
-		verifier, err := signature.LoadVerifier(pub, crypto.SHA256)
-		if err != nil {
-			return nil, err
-		}
-
-		if !sth.Verify(verifier) {
-			return nil, errors.New("signature on tree head did not verify")
-		}
-
-		cmdOutput := &logInfoCmdOutput{
-			TreeSize:       swag.Int64Value(logInfo.TreeSize),
-			RootHash:       swag.StringValue(logInfo.RootHash),
-			TimestampNanos: sth.GetTimestamp(),
-			TreeID:         swag.StringValue(logInfo.TreeID),
-		}
-
-		oldState := state.Load(serverURL)
-		if oldState != nil {
-			persistedSize := oldState.Size
-			if persistedSize < sth.Size {
-				log.CliLogger.Infof("Found previous log state, proving consistency between %d and %d", oldState.Size, sth.Size)
-				params := tlog.NewGetLogProofParams()
-				firstSize := int64(persistedSize)
-				params.FirstSize = &firstSize
-				params.LastSize = int64(sth.Size)
-				proof, err := rekorClient.Tlog.GetLogProof(params)
-				if err != nil {
-					return nil, err
-				}
-				hashes := [][]byte{}
-				for _, h := range proof.Payload.Hashes {
-					b, _ := hex.DecodeString(h)
-					hashes = append(hashes, b)
-				}
-				v := logverifier.New(rfc6962.DefaultHasher)
-				if err := v.VerifyConsistencyProof(firstSize, int64(sth.Size), oldState.Hash,
-					sth.Hash, hashes); err != nil {
-					return nil, err
-				}
-				log.CliLogger.Infof("Consistency proof valid!")
-			} else if persistedSize == sth.Size {
-				if !bytes.Equal(oldState.Hash, sth.Hash) {
-					return nil, errors.New("root hash returned from server does not match previously persisted state")
-				}
-				log.CliLogger.Infof("Persisted log state matches the current state of the log")
-			} else if persistedSize > sth.Size {
-				return nil, fmt.Errorf("current size of tree reported from server %d is less than previously persisted state %d", sth.Size, persistedSize)
+			hashes := [][]byte{}
+			for _, h := range proof.Payload.Hashes {
+				b, _ := hex.DecodeString(h)
+				hashes = append(hashes, b)
 			}
-		} else {
-			log.CliLogger.Infof("No previous log state stored, unable to prove consistency")
+			v := logverifier.New(rfc6962.DefaultHasher)
+			if err := v.VerifyConsistencyProof(firstSize, int64(sth.Size), oldState.Hash,
+				sth.Hash, hashes); err != nil {
+				return err
+			}
+			log.CliLogger.Infof("Consistency proof valid!")
+		} else if persistedSize == sth.Size {
+			if !bytes.Equal(oldState.Hash, sth.Hash) {
+				return errors.New("root hash returned from server does not match previously persisted state")
+			}
+			log.CliLogger.Infof("Persisted log state matches the current state of the log")
+		} else if persistedSize > sth.Size {
+			return fmt.Errorf("current size of tree reported from server %d is less than previously persisted state %d", sth.Size, persistedSize)
 		}
+	} else {
+		log.CliLogger.Infof("No previous log state stored, unable to prove consistency")
+	}
 
-		if viper.GetBool("store_tree_state") {
-			if err := state.Dump(serverURL, &sth); err != nil {
+	if viper.GetBool("store_tree_state") {
+		if treeID != "" {
+			if err := state.DumpTreeID(treeID, &sth); err != nil {
 				log.CliLogger.Infof("Unable to store previous state: %v", err)
 			}
 		}
-		return cmdOutput, nil
-	}),
+		if err := state.Dump(serverURL, &sth); err != nil {
+			log.CliLogger.Infof("Unable to store previous state: %v", err)
+		}
+	}
+	return nil
+}
+
+func verifyActiveTree(rekorClient *rclient.Rekor, logInfo *models.LogInfo, serverURL string) (*logInfoCmdOutput, error) {
+	signedTreeHead := swag.StringValue(logInfo.SignedTreeHead)
+	sth := util.SignedCheckpoint{}
+	if err := sth.UnmarshalText([]byte(signedTreeHead)); err != nil {
+		return nil, err
+	}
+	if err := verifyTree(rekorClient, signedTreeHead, swag.StringValue(logInfo.TreeID), serverURL); err != nil {
+		return nil, err
+	}
+
+	cmdOutput := &logInfoCmdOutput{
+		TreeSize:       swag.Int64Value(logInfo.TreeSize),
+		RootHash:       swag.StringValue(logInfo.RootHash),
+		TimestampNanos: sth.GetTimestamp(),
+		TreeID:         swag.StringValue(logInfo.TreeID),
+	}
+	return cmdOutput, nil
+}
+
+func loadVerifier(rekorClient *rclient.Rekor, treeID string) (signature.Verifier, error) {
+	publicKey := viper.GetString("rekor_server_public_key")
+	if publicKey == "" {
+		// fetch key from server
+		keyResp, err := rekorClient.Pubkey.GetPublicKey(nil)
+		if err != nil {
+			return nil, err
+		}
+		publicKey = keyResp.Payload
+	}
+
+	block, _ := pem.Decode([]byte(publicKey))
+	if block == nil {
+		return nil, errors.New("failed to decode public key of server")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return signature.LoadVerifier(pub, crypto.SHA256)
+}
+
+func (l *logInfoCmdOutput) String() string {
+	// Verification is always successful if we return an object.
+	ts := time.Unix(0, int64(l.TimestampNanos)).UTC().Format(time.RFC3339)
+
+	return fmt.Sprintf(`Verification Successful!
+Tree Size: %v
+Root Hash: %s
+Timestamp: %s
+TreeID:    %s
+`, l.TreeSize, l.RootHash, ts, l.TreeID)
 }
 
 func init() {

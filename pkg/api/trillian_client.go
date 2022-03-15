@@ -46,7 +46,7 @@ type TrillianClient struct {
 func NewTrillianClient(ctx context.Context) TrillianClient {
 	return TrillianClient{
 		client:  api.logClient,
-		ranges:  *api.logRanges,
+		ranges:  api.logRanges,
 		logID:   api.logID,
 		context: ctx,
 	}

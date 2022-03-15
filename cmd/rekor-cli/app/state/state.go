@@ -50,6 +50,29 @@ func Dump(url string, sth *util.SignedCheckpoint) error {
 	return nil
 }
 
+func DumpTreeID(tid string, sth *util.SignedCheckpoint) error {
+	rekorDir, err := getRekorDir()
+	if err != nil {
+		return err
+	}
+	statePath := filepath.Join(rekorDir, "state.json")
+
+	state := loadStateFile()
+	if state == nil {
+		state = make(persistedState)
+	}
+	state[tid] = sth
+
+	b, err := json.Marshal(&state)
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(statePath, b, 0600); err != nil {
+		return err
+	}
+	return nil
+}
+
 func loadStateFile() persistedState {
 	rekorDir, err := getRekorDir()
 	if err != nil {
@@ -70,6 +93,13 @@ func loadStateFile() persistedState {
 func Load(url string) *util.SignedCheckpoint {
 	if state := loadStateFile(); state != nil {
 		return state[url]
+	}
+	return nil
+}
+
+func LoadTreeID(tid string) *util.SignedCheckpoint {
+	if state := loadStateFile(); state != nil {
+		return state[tid]
 	}
 	return nil
 }
