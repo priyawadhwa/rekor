@@ -125,6 +125,10 @@ paths:
           required: true
           minimum: 1
           description: The size of the tree that you wish to prove consistency to
+        - in: query
+          name: treeID
+          type: string
+          description: The tree ID of the tree that you wish to prove consistency for
       responses:
         200:
           description: All hashes required to compute the consistency proof
