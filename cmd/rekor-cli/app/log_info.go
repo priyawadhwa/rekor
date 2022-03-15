@@ -89,8 +89,10 @@ func verifyInactiveShards(rekorClient *rclient.Rekor, logInfo *models.LogInfo, s
 }
 
 func verifyTree(rekorClient *rclient.Rekor, signedTreeHead, treeID, serverURL string) error {
+	oldState := state.Load(serverURL)
 	if treeID != "" {
 		log.CliLogger.Infof("Verifying tree with ID %s...", treeID)
+		oldState = state.LoadTreeID(treeID)
 	}
 	sth := util.SignedCheckpoint{}
 	if err := sth.UnmarshalText([]byte(signedTreeHead)); err != nil {
@@ -103,10 +105,6 @@ func verifyTree(rekorClient *rclient.Rekor, signedTreeHead, treeID, serverURL st
 	if !sth.Verify(verifier) {
 		return errors.New("signature on tree head did not verify")
 	}
-	oldState := state.LoadTreeID(treeID)
-	if oldState == nil {
-		oldState = state.Load(serverURL)
-	}
 	if oldState != nil {
 		persistedSize := oldState.Size
 		if persistedSize < sth.Size {
@@ -115,6 +113,7 @@ func verifyTree(rekorClient *rclient.Rekor, signedTreeHead, treeID, serverURL st
 			firstSize := int64(persistedSize)
 			params.FirstSize = &firstSize
 			params.LastSize = int64(sth.Size)
+			params.TreeID = &treeID
 			proof, err := rekorClient.Tlog.GetLogProof(params)
 			if err != nil {
 				return err

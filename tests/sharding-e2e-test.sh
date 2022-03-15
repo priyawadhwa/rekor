@@ -65,12 +65,6 @@ done
 
 echo
 
-# rekor-cli loginfo should work
-$REKOR_CLI loginfo --rekor_server http://localhost:3000 
-CURRENT_TREE_ID=$($REKOR_CLI loginfo --rekor_server http://localhost:3000  --format json  | jq -r .TreeID)
-echo "current Tree ID is $CURRENT_TREE_ID"
-
-
 # Add some things to the tlog :)
 cd tests
 $REKOR_CLI upload --artifact test_file.txt --signature test_file.sig --public-key test_public_key.key --rekor_server http://localhost:3000
@@ -81,6 +75,11 @@ cd ../..
 
 # Make sure we have three entries in the log
 check_log_index 2
+
+# rekor-cli loginfo should work
+$REKOR_CLI loginfo --rekor_server http://localhost:3000 
+CURRENT_TREE_ID=$($REKOR_CLI loginfo --rekor_server http://localhost:3000  --format json  | jq -r .TreeID)
+echo "current Tree ID is $CURRENT_TREE_ID"
 
 # Now, we want to shard the log.
 # Create a new tree
