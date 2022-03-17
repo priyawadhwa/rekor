@@ -43,7 +43,7 @@ ifeq ($(DIFF), 1)
     GIT_TREESTATE = "dirty"
 endif
 
-KO_PREFIX ?= gcr.io/projectsigstore
+KO_PREFIX ?= gcr.io/priya-chainguard
 export KO_DOCKER_REPO=$(KO_PREFIX)
 REKOR_YAML ?= rekor-$(GIT_TAG).yaml
 GHCR_PREFIX ?= ghcr.io/sigstore/rekor
