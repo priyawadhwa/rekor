@@ -83,11 +83,6 @@ cd ../..
 check_log_index 2
 $REKOR_CLI logproof --rekor_server http://localhost:3000 --last-size 2
 
-# rekor-cli loginfo should work
-$REKOR_CLI loginfo --rekor_server http://localhost:3000 
-CURRENT_TREE_ID=$($REKOR_CLI loginfo --rekor_server http://localhost:3000  --format json  | jq -r .TreeID)
-echo "current Tree ID is $CURRENT_TREE_ID"
-
 # Now, we want to shard the log.
 # Create a new tree
 echo "creating a new Tree ID...."

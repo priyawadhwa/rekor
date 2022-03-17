@@ -28,13 +28,13 @@ import (
 	"github.com/google/trillian/merkle/logverifier"
 	"github.com/google/trillian/merkle/rfc6962"
 	"github.com/pkg/errors"
+	rclient "github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/sigstore/rekor/cmd/rekor-cli/app/format"
 	"github.com/sigstore/rekor/cmd/rekor-cli/app/state"
 	"github.com/sigstore/rekor/pkg/client"
-	rclient "github.com/sigstore/rekor/pkg/generated/client"
 
 	"github.com/sigstore/rekor/pkg/generated/client/tlog"
 	"github.com/sigstore/rekor/pkg/generated/models"
@@ -72,6 +72,12 @@ var logInfoCmd = &cobra.Command{
 		logInfo := result.GetPayload()
 		if err := verifyInactiveShards(rekorClient, logInfo, serverURL); err != nil {
 			return nil, errors.Wrap(err, "verifying inactive sahrds")
+		}
+
+		sth := util.SignedCheckpoint{}
+		signedTreeHead := swag.StringValue(logInfo.SignedTreeHead)
+		if err := sth.UnmarshalText([]byte(signedTreeHead)); err != nil {
+			return nil, err
 		}
 		return verifyActiveTree(rekorClient, logInfo, serverURL)
 	}),
@@ -207,6 +213,45 @@ Root Hash: %s
 Timestamp: %s
 TreeID:    %s
 `, l.TreeSize, l.RootHash, ts, l.TreeID)
+}
+
+func proveConsistency(rekorClient *rclient.Rekor, oldState *util.SignedCheckpoint, sth util.SignedCheckpoint) error {
+	if oldState == nil {
+		log.CliLogger.Infof("No previous log state stored, unable to prove consistency")
+		return nil
+	}
+	persistedSize := oldState.Size
+	switch {
+	case persistedSize < sth.Size:
+		log.CliLogger.Infof("Found previous log state, proving consistency between %d and %d", oldState.Size, sth.Size)
+		params := tlog.NewGetLogProofParams()
+		firstSize := int64(persistedSize)
+		params.FirstSize = &firstSize
+		params.LastSize = int64(sth.Size)
+		proof, err := rekorClient.Tlog.GetLogProof(params)
+		if err != nil {
+			return err
+		}
+		hashes := [][]byte{}
+		for _, h := range proof.Payload.Hashes {
+			b, _ := hex.DecodeString(h)
+			hashes = append(hashes, b)
+		}
+		v := logverifier.New(rfc6962.DefaultHasher)
+		if err := v.VerifyConsistencyProof(firstSize, int64(sth.Size), oldState.Hash,
+			sth.Hash, hashes); err != nil {
+			return err
+		}
+		log.CliLogger.Infof("Consistency proof valid!")
+	case persistedSize == sth.Size:
+		if !bytes.Equal(oldState.Hash, sth.Hash) {
+			return errors.New("root hash returned from server does not match previously persisted state")
+		}
+		log.CliLogger.Infof("Persisted log state matches the current state of the log")
+	default:
+		return fmt.Errorf("current size of tree reported from server %d is less than previously persisted state %d", sth.Size, persistedSize)
+	}
+	return nil
 }
 
 func init() {
