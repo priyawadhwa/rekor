@@ -62,7 +62,7 @@ func (a *Client) SearchIndex(params *SearchIndexParams, opts ...ClientOption) (*
 		Method:             "POST",
 		PathPattern:        "/api/v1/index/retrieve",
 		ProducesMediaTypes: []string{"application/json;q=1", "application/yaml"},
-		ConsumesMediaTypes: []string{"application/json", "application/yaml"},
+		ConsumesMediaTypes: []string{"application/json", "application/x-www-form-urlencoded", "application/yaml"},
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &SearchIndexReader{formats: a.formats},

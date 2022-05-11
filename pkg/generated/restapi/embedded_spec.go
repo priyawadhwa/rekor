@@ -37,6 +37,7 @@ func init() {
   "consumes": [
     "application/json",
     "application/yaml"
+    "application/x-www-form-urlencoded"
   ],
   "produces": [
     "application/json;q=1",

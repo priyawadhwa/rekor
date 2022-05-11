@@ -75,6 +75,8 @@ func configureAPI(api *operations.RekorServerAPI) http.Handler {
 	api.YamlConsumer = client.YamlConsumer()
 	api.YamlProducer = client.YamlProducer()
 
+	api.UrlformConsumer = client.URLEncodedConsumer()
+
 	api.ApplicationXPemFileProducer = runtime.TextProducer()
 	api.ApplicationPemCertificateChainProducer = runtime.TextProducer()
 	api.ApplicationTimestampQueryConsumer = runtime.ByteStreamConsumer()

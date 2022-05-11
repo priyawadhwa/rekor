@@ -62,7 +62,7 @@ func (a *Client) GetRekorVersion(params *GetRekorVersionParams, opts ...ClientOp
 		Method:             "GET",
 		PathPattern:        "/api/v1/version",
 		ProducesMediaTypes: []string{"application/json;q=1", "application/yaml"},
-		ConsumesMediaTypes: []string{"application/json", "application/yaml"},
+		ConsumesMediaTypes: []string{"application/json", "application/x-www-form-urlencoded", "application/yaml"},
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &GetRekorVersionReader{formats: a.formats},

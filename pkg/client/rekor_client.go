@@ -34,9 +34,11 @@ func GetRekorClient(rekorServerURL string, opts ...Option) (*client.Rekor, error
 
 	rt := httptransport.New(url.Host, client.DefaultBasePath, []string{url.Scheme})
 	rt.Consumers["application/yaml"] = YamlConsumer()
+	rt.Consumers["application/x-www-form-urlencoded"] = URLEncodedConsumer()
 	rt.Consumers["application/x-pem-file"] = runtime.TextConsumer()
 	rt.Consumers["application/pem-certificate-chain"] = runtime.TextConsumer()
 	rt.Producers["application/yaml"] = YamlProducer()
+	// rt.Producers["application/x-www-form-urlencoded"] = URLEncodedProducer()
 	rt.Producers["application/timestamp-query"] = runtime.ByteStreamProducer()
 	rt.Consumers["application/timestamp-reply"] = runtime.ByteStreamConsumer()
 

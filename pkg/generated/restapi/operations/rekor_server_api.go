@@ -66,8 +66,9 @@ func NewRekorServerAPI(spec *loads.Document) *RekorServerAPI {
 		ApplicationTimestampQueryConsumer: runtime.ConsumerFunc(func(r io.Reader, target interface{}) error {
 			return errors.NotImplemented("applicationTimestampQuery consumer has not yet been implemented")
 		}),
-		JSONConsumer: runtime.JSONConsumer(),
-		YamlConsumer: yamlpc.YAMLConsumer(),
+		JSONConsumer:    runtime.JSONConsumer(),
+		UrlformConsumer: runtime.DiscardConsumer,
+		YamlConsumer:    yamlpc.YAMLConsumer(),
 
 		ApplicationPemCertificateChainProducer: runtime.ProducerFunc(func(w io.Writer, data interface{}) error {
 			return errors.NotImplemented("applicationPemCertificateChain producer has not yet been implemented")
@@ -148,6 +149,9 @@ type RekorServerAPI struct {
 	// JSONConsumer registers a consumer for the following mime types:
 	//   - application/json
 	JSONConsumer runtime.Consumer
+	// UrlformConsumer registers a consumer for the following mime types:
+	//   - application/x-www-form-urlencoded
+	UrlformConsumer runtime.Consumer
 	// YamlConsumer registers a consumer for the following mime types:
 	//   - application/yaml
 	YamlConsumer runtime.Consumer
@@ -265,6 +269,9 @@ func (o *RekorServerAPI) Validate() error {
 	if o.JSONConsumer == nil {
 		unregistered = append(unregistered, "JSONConsumer")
 	}
+	if o.UrlformConsumer == nil {
+		unregistered = append(unregistered, "UrlformConsumer")
+	}
 	if o.YamlConsumer == nil {
 		unregistered = append(unregistered, "YamlConsumer")
 	}
@@ -351,6 +358,8 @@ func (o *RekorServerAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Co
 			result["application/timestamp-query"] = o.ApplicationTimestampQueryConsumer
 		case "application/json":
 			result["application/json"] = o.JSONConsumer
+		case "application/x-www-form-urlencoded":
+			result["application/x-www-form-urlencoded"] = o.UrlformConsumer
 		case "application/yaml":
 			result["application/yaml"] = o.YamlConsumer
 		}

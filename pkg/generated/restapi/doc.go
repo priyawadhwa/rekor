@@ -27,6 +27,7 @@
 //  Consumes:
 //    - application/timestamp-query
 //    - application/json
+//    - application/x-www-form-urlencoded
 //    - application/yaml
 //
 //  Produces:

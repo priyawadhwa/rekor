@@ -24,7 +24,7 @@ TOOLS_DIR := hack/tools
 TOOLS_BIN_DIR := $(abspath $(TOOLS_DIR)/bin)
 BIN_DIR := $(abspath $(ROOT_DIR)/bin)
 
-PROJECT_ID ?= projectsigstore
+PROJECT_ID ?= priya-chainguard
 RUNTIME_IMAGE ?= gcr.io/distroless/static
 # Set version variables for LDFLAGS
 GIT_VERSION ?= $(shell git describe --tags --always --dirty)
@@ -43,7 +43,7 @@ ifeq ($(DIFF), 1)
     GIT_TREESTATE = "dirty"
 endif
 
-KO_PREFIX ?= gcr.io/projectsigstore
+KO_PREFIX ?= gcr.io/priya-chainguard
 export KO_DOCKER_REPO=$(KO_PREFIX)
 REKOR_YAML ?= rekor-$(GIT_TAG).yaml
 GHCR_PREFIX ?= ghcr.io/sigstore/rekor
