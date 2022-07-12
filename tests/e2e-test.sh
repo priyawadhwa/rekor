@@ -24,6 +24,7 @@ if [ "$SERVER_VERSION" == "main" ]; then
    docker-compose up -d
 else
    echo "starting services with version $SERVER_VERSION"
+   git fetch origin
    git checkout $SERVER_VERSION
    docker-compose up -d --build
    git switch -
