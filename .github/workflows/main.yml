@@ -76,14 +76,14 @@ jobs:
         git fetch origin
         VERSIONS=$(git tag --sort=-version:refname | head -n 2 | jq --raw-input . | jq --slurp . | jq -c '. += ["main"]')
         echo "Versions to test: " $VERSIONS
-        echo '::set-output name=versions::$(echo $VERSIONS)'
+        echo "::set-output name=versions::$(echo ${VERSIONS//\"/\\\"})"
 
   e2e:
     runs-on: ubuntu-20.04
     needs: [build, get-versions]
     strategy:
         matrix:
-          server-version: ${{fromJSON(needs.get-versions.outputs.versions)}}
+          server-version: ${{ fromJSON(needs.get-versions.outputs.versions) }}
     steps:
       - name: download minisign
         run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
@@ -104,48 +104,48 @@ jobs:
           name: E2E Docker Compose logs
           path: /tmp/docker-compose.log
 
-  sharding-e2e:
-    runs-on: ubuntu-20.04
-    needs: build
+  # sharding-e2e:
+  #   runs-on: ubuntu-20.04
+  #   needs: build
 
-    steps:
-      - name: download minisign
-        run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - name: Docker Build
-        run: docker-compose build
-      - name: Extract version of Go to use
-        run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
-      - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
-        with:
-          go-version: ${{ env.GOVERSION }}
-      - name: Sharding Test
-        run: ./tests/sharding-e2e-test.sh
-      - name: Upload logs if they exist
-        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3
-        if: failure()
-        with:
-          name: Sharding E2E Docker Compose logs
-          path: /tmp/docker-compose.log
+  #   steps:
+  #     - name: download minisign
+  #       run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
+  #     - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+  #     - name: Docker Build
+  #       run: docker-compose build
+  #     - name: Extract version of Go to use
+  #       run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
+  #     - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
+  #       with:
+  #         go-version: ${{ env.GOVERSION }}
+  #     - name: Sharding Test
+  #       run: ./tests/sharding-e2e-test.sh
+  #     - name: Upload logs if they exist
+  #       uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3
+  #       if: failure()
+  #       with:
+  #         name: Sharding E2E Docker Compose logs
+  #         path: /tmp/docker-compose.log
 
-  issue-872-e2e:
-    runs-on: ubuntu-20.04
-    needs: build
+  # issue-872-e2e:
+  #   runs-on: ubuntu-20.04
+  #   needs: build
 
-    steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - name: Docker Build
-        run: docker-compose build
-      - name: Extract version of Go to use
-        run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
-      - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
-        with:
-          go-version: ${{ env.GOVERSION }}
-      - name: Test for Attestation begin returned that was previously persisted in tlog
-        run: ./tests/issue-872-e2e-test.sh
-      - name: Upload logs if they exist
-        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3
-        if: failure()
-        with:
-          name: Docker Compose logs
-          path: /tmp/*docker-compose.log
+  #   steps:
+  #     - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+  #     - name: Docker Build
+  #       run: docker-compose build
+  #     - name: Extract version of Go to use
+  #       run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
+  #     - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
+  #       with:
+  #         go-version: ${{ env.GOVERSION }}
+  #     - name: Test for Attestation begin returned that was previously persisted in tlog
+  #       run: ./tests/issue-872-e2e-test.sh
+  #     - name: Upload logs if they exist
+  #       uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3
+  #       if: failure()
+  #       with:
+  #         name: Docker Compose logs
+  #         path: /tmp/*docker-compose.log
