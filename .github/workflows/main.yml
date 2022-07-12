@@ -76,7 +76,7 @@ jobs:
         git fetch origin
         VERSIONS=$(git tag --sort=-version:refname | head -n 2 | jq --raw-input . | jq --slurp . | jq -c '. += ["main"]')
         echo "Versions to test: " $VERSIONS
-        echo "::set-output name=versions::$(echo ${VERSIONS//\"/\\\"})"
+        echo "::set-output name=versions::[v0.9.1,v0.9.0,main]"
 
   e2e:
     runs-on: ubuntu-20.04
