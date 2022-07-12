@@ -77,14 +77,14 @@ jobs:
         git tag --sort=-version:refname | head -n 2 > versions
         VERSIONS=$(tr '\n' ',' < versions)
         VERSIONS=$VERSIONS"main"
-        echo "::set-output name=versions::[main, v0.9.0, v0.9.1]"
+        echo "::set-output name=versions::[\"main\", \"v0.9.0\", \"v0.9.1\"]"
 
   e2e:
     runs-on: ubuntu-20.04
     needs: [build, get-versions]
     strategy:
-        matrix:
-          server-version: ${{ needs.get-versions.outputs.versions }}
+        matrix: 
+          server-version: ${{fromJson(needs.get-versions.outputs.versions)}}
     steps:
       - name: download minisign
         run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
