@@ -66,7 +66,7 @@ jobs:
   get-versions:
     runs-on: ubuntu-20.04
     outputs:
-      versions: ${{ steps.versions.outputs.value }}
+      versions: ${{ steps.versions.outputs.versions }}
     steps:
     - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
     - name: get versions to test e2e against
@@ -74,16 +74,16 @@ jobs:
       shell: bash
       run: |
         git fetch origin
-        LAST_THREE_VERSIONS=$(git tag --sort=-version:refname | head -n 3 | jq --raw-input . | jq --slurp . )
-        echo "Last 3 versions: " $LAST_THREE_VERSIONS
-        echo '::set-output name=versions::$LAST_THREE_VERSIONS'
+        VERSIONS=$(git tag --sort=-version:refname | head -n 2 | jq --raw-input . | jq --slurp . | jq -c '. += ["main"]')
+        echo "Versions to test: " $VERSIONS
+        echo '::set-output name=versions::$(echo $VERSIONS)'
 
   e2e:
     runs-on: ubuntu-20.04
     needs: [build, get-versions]
     strategy:
         matrix:
-          value: ${{fromJson(needs.get-versions.outputs.versions)}}
+          server-version: ${{fromJSON(needs.get-versions.outputs.versions)}}
     steps:
       - name: download minisign
         run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
@@ -96,7 +96,7 @@ jobs:
         with:
           go-version: ${{ env.GOVERSION }}
       - name: CLI
-        run: ./tests/e2e-test.sh
+        run: SERVER_VERSION=${{ matrix.server-version }} ./tests/e2e-test.sh
       - name: Upload logs if they exist
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3
         if: failure()

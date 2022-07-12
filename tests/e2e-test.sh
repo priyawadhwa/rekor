@@ -14,11 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SERVER_VERSION="${VARIABLE:-main}"
+
 set -e
 testdir=$(dirname "$0")
 
-echo "starting services"
-docker-compose up -d
+if [ "$SERVER_VERSION" == "main" ]; then
+   echo "starting services"
+   docker-compose up -d
+else
+   echo "starting services with version $SERVER_VERSION"
+   git checkout $SERVER_VERSION
+   docker-compose up -d --build
+   git switch -
+fi
+
 
 echo "building CLI and server"
 go build -o rekor-cli ./cmd/rekor-cli
