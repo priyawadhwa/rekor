@@ -63,10 +63,27 @@ jobs:
           make ko-local 2>&1 | tee output.txt
           docker run --rm $(tail -1 output.txt) version
 
+  get-versions:
+    runs-on: ubuntu-20.04
+    outputs:
+      versions: ${{ steps.versions.outputs.value }}
+    steps:
+    - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+    - name: get versions to test e2e against
+      id: versions
+      shell: bash
+      run: |
+        git fetch origin
+        LAST_THREE_VERSIONS=$(git tag --sort=-version:refname | head -n 3 | jq --raw-input . | jq --slurp . )
+        echo "Last 3 versions: " $LAST_THREE_VERSIONS
+        echo '::set-output name=versions::$LAST_THREE_VERSIONS'
+
   e2e:
     runs-on: ubuntu-20.04
-    needs: build
-
+    needs: [build, get-versions]
+    strategy:
+        matrix:
+          value: ${{fromJson(needs.get-versions.outputs.versions)}}
     steps:
       - name: download minisign
         run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
