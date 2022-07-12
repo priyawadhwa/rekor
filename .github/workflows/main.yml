@@ -83,7 +83,7 @@ jobs:
     needs: [build, get-versions]
     strategy:
         matrix:
-          server-version: ${{ fromJSON(needs.get-versions.outputs.versions) }}
+          server-version: [v0.9.1,v0.9.0,main]
     steps:
       - name: download minisign
         run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign
