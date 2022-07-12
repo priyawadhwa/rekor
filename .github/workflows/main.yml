@@ -74,16 +74,17 @@ jobs:
       shell: bash
       run: |
         git fetch origin
-        VERSIONS=$(git tag --sort=-version:refname | head -n 2 | jq --raw-input . | jq --slurp . | jq -c '. += ["main"]')
-        echo "Versions to test: " $VERSIONS
-        echo "::set-output name=versions::[v0.9.1,v0.9.0,main]"
+        git tag --sort=-version:refname | head -n 2 > versions
+        VERSIONS=$(tr '\n' ',' < versions)
+        VERSIONS=$VERSIONS"main"
+        echo "::set-output name=versions::$(echo "[$VERSIONS]")"
 
   e2e:
     runs-on: ubuntu-20.04
     needs: [build, get-versions]
     strategy:
         matrix:
-          server-version: [v0.9.1,v0.9.0,main]
+          server-version: ${{ fromJSON(needs.get-versions.outputs.versions) }}
     steps:
       - name: download minisign
         run: sudo add-apt-repository ppa:dysfunctionalprogramming/minisign && sudo apt-get update && sudo apt-get install minisign

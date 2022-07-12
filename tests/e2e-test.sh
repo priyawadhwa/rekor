@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SERVER_VERSION="${VARIABLE:-main}"
+SERVER_VERSION="${SERVER_VERSION:-main}"
 
 set -e
 testdir=$(dirname "$0")
