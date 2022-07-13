@@ -20,7 +20,7 @@ if [ -z "$SERVER_VERSION" ]; then
     exit 1
 fi
 
-HARNESS_TESTS="TestVersion TestUploadVerify TestLogInfo TestGet TestSSH TestJAR TestAPK TestIntoto TestX509 TestEntryUpload"
+HARNESS_TESTS="TestUploadVerify TestLogInfo TestGet TestSSH TestJAR TestAPK TestIntoto TestX509 TestEntryUpload"
 
 testdir=$(dirname "$0")
 

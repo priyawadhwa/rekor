@@ -48,6 +48,7 @@ import (
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
 	"github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
+	rserver "github.com/sigstore/rekor/pkg/generated/client/server"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/rekor/pkg/sharding"
 	"github.com/sigstore/rekor/pkg/signer"
@@ -768,7 +769,7 @@ func TestVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := rekorClient.Server.GetRekorVersion(&server.GetRekorVersionParams{})
+	resp, err := rekorClient.Server.GetRekorVersion(&rserver.GetRekorVersionParams{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -777,6 +778,6 @@ func TestVersion(t *testing.T) {
 	}
 	got := resp.GetPayload().Version
 	if swag.StringValue(got) != version {
-		t.Fatal("incorrect version: got %s expected %s", swag.StringValue(got), version)
+		t.Fatalf("incorrect version: got %s expected %s", swag.StringValue(got), version)
 	}
 }
