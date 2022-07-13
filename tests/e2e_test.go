@@ -758,3 +758,25 @@ func TestTufVerifyUpload(t *testing.T) {
 	out = runCli(t, "search", "--public-key", rootPath, "--pki-format", "tuf")
 	outputContains(t, out, uuid)
 }
+
+func TestVersion(t *testing.T) {
+	version := os.Getenv("SERVER_VERSION")
+	if version == "" {
+		t.Skip("This test only runs as part of the test harness to confirm the rekor server version")
+	}
+	rekorClient, err := client.GetRekorClient(rekorServer())
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := rekorClient.Server.GetRekorVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.GetPayload() == nil {
+		t.Fatal("didn't get version from server")
+	}
+	got := resp.GetPayload().Version
+	if swag.StringValue(got) != version {
+		t.Fatal("incorrect version: got %s expected %s", swag.StringValue(got), version)
+	}
+}
