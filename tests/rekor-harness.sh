@@ -29,7 +29,7 @@ echo "starting services with version $SERVER_VERSION"
 git fetch origin
 git checkout $SERVER_VERSION
 docker-compose up -d --build
-git switch main
+git switch -
 
 echo "building CLI and server"
 go build -o rekor-cli ./cmd/rekor-cli
