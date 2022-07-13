@@ -32,7 +32,7 @@ git fetch origin
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 git checkout $SERVER_VERSION
 docker-compose up -d --build
-git switch $current_branch
+git checkout $current_branch
 
 count=0
 
