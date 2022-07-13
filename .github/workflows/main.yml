@@ -76,6 +76,9 @@ jobs:
         git fetch origin
         VERSIONS=$(git tag --sort=-version:refname | head -n 2 | jq --raw-input . | jq --slurp | jq -c '. += ["main"]')
         VERSIONS=$(echo ${VERSIONS//\"/\\\"} )
+
+        echo $VERSIONS
+        #  want: [\"main\", \"v0.9.0\", \"v0.9.1\"]
         echo "::set-output name=versions::$(echo $VERSIONS)"
 
   e2e:
