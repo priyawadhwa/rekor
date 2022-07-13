@@ -20,14 +20,14 @@ set -e
 testdir=$(dirname "$0")
 
 if [ "$SERVER_VERSION" == "main" ]; then
-   echo "starting services"
+   echo "starting services at $SERVER_VERSION"
    docker-compose up -d
 else
    echo "starting services with version $SERVER_VERSION"
    git fetch origin
    git checkout $SERVER_VERSION
    docker-compose up -d --build
-   git switch -
+   git switch main
 fi
 
 
