@@ -95,7 +95,7 @@ jobs:
       with:
         go-version: ${{ env.GOVERSION }}
     - name: CLI
-      run: SERVER_VERSION=$SERVER_VERSION ./tests/rekor-harness.sh
+      run: ./tests/rekor-harness.sh
     - name: Upload logs if they exist
       uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3
       if: failure()

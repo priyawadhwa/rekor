@@ -15,8 +15,6 @@
 # limitations under the License.
 set -e
 
-echo $SERVER_VERSION
-
 if [ -z "$SERVER_VERSION" ]; then
     echo "Please indicate which version of rekor to test against by setting SERVER_VERSION"
     exit 1
