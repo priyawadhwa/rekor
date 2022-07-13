@@ -32,36 +32,36 @@ jobs:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
       - name: Extract version of Go to use
         run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
-      - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
-        with:
-          go-version: ${{ env.GOVERSION }}
-      - name: Build
-        run: make -C $GITHUB_WORKSPACE all
-      - name: Fuzz-Build
-        run: make -C $GITHUB_WORKSPACE fuzz
-      - name: Test
-        run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
-      - name: Upload Coverage Report
-        uses: codecov/codecov-action@81cd2dc8148241f03f5839d295e000b8f761e378 # v3.1.0
-      - name: Ensure no files were modified as a result of the build
-        run: git update-index --refresh && git diff-index --quiet HEAD -- || git diff --exit-code
+      # - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
+      #   with:
+      #     go-version: ${{ env.GOVERSION }}
+      # - name: Build
+      #   run: make -C $GITHUB_WORKSPACE all
+      # - name: Fuzz-Build
+      #   run: make -C $GITHUB_WORKSPACE fuzz
+      # - name: Test
+      #   run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+      # - name: Upload Coverage Report
+      #   uses: codecov/codecov-action@81cd2dc8148241f03f5839d295e000b8f761e378 # v3.1.0
+      # - name: Ensure no files were modified as a result of the build
+      #   run: git update-index --refresh && git diff-index --quiet HEAD -- || git diff --exit-code
 
-  container-build:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - name: Extract version of Go to use
-        run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
-      - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
-        with:
-          go-version: ${{ env.GOVERSION }}
-      - uses: imjasonh/setup-ko@2c3450ca27f6e6f2b02e72a40f2163c281a1f675 # v0.4
-        with:
-          version: v0.11.2
-      - name: container
-        run: |
-          make ko-local 2>&1 | tee output.txt
-          docker run --rm $(tail -1 output.txt) version
+  # container-build:
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+  #     - name: Extract version of Go to use
+  #       run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
+  #     - uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.1.0
+  #       with:
+  #         go-version: ${{ env.GOVERSION }}
+  #     - uses: imjasonh/setup-ko@2c3450ca27f6e6f2b02e72a40f2163c281a1f675 # v0.4
+  #       with:
+  #         version: v0.11.2
+  #     - name: container
+  #       run: |
+  #         make ko-local 2>&1 | tee output.txt
+  #         docker run --rm $(tail -1 output.txt) version
 
   get-versions:
     runs-on: ubuntu-20.04
@@ -80,7 +80,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-20.04
-    needs: [build, get-versions]
+    needs: [get-versions]
     strategy:
         matrix: 
           server-version: ${{fromJson(needs.get-versions.outputs.versions)}}
