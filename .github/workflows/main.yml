@@ -81,6 +81,7 @@ jobs:
   e2e:
     runs-on: ubuntu-20.04
     needs: [get-versions]
+    continue-on-error: true
     strategy:
         matrix: 
           server-version: ${{fromJson(needs.get-versions.outputs.versions)}}
