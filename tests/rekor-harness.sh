@@ -27,9 +27,10 @@ testdir=$(dirname "$0")
 
 echo "starting services with version $SERVER_VERSION"
 git fetch origin
+current_branch=$(git rev-parse --abbrev-ref HEAD)
 git checkout $SERVER_VERSION
 docker-compose up -d --build
-git switch main
+git switch $current_branch
 
 echo "building CLI and server"
 go build -o rekor-cli ./cmd/rekor-cli
