@@ -20,7 +20,7 @@ if [ -z "$SERVER_VERSION" ]; then
     exit 1
 fi
 
-HARNESS_TESTS="TestUploadVerify,TestLogInfo,TestGet,TestSSH,TestJAR,TestAPK,TestIntoto,TestX509,TestEntryUpload"
+HARNESS_TESTS="TestUploadVerify TestLogInfo TestGet TestSSH TestJAR TestAPK TestIntoto TestX509 TestEntryUpload"
 
 testdir=$(dirname "$0")
 
@@ -51,17 +51,22 @@ do
 done
 
 echo
-echo "running tests"
+echo "running tests $HARNESS_TESTS"
 REKORTMPDIR="$(mktemp -d -t rekor_test.XXXXXX)"
 touch $REKORTMPDIR.rekor.yaml
 trap "rm -rf $REKORTMPDIR" EXIT
-if ! REKORTMPDIR=$REKORTMPDIR go test -run $HARNESS_TESTS -tags=e2e ./tests/; then 
-   docker-compose logs --no-color > /tmp/docker-compose.log
-   exit 1
-fi
-if docker-compose logs --no-color | grep -q "panic: runtime error:" ; then
-   # if we're here, we found a panic
-   echo "Failing due to panics detected in logs"
-   docker-compose logs --no-color > /tmp/docker-compose.log
-   exit 1
-fi
+
+
+for test in $HARNESS_TESTS
+do
+    if ! REKORTMPDIR=$REKORTMPDIR go test -run $test -v -tags=e2e ./tests/; then 
+        docker-compose logs --no-color > /tmp/docker-compose.log
+        exit 1
+    fi
+    if docker-compose logs --no-color | grep -q "panic: runtime error:" ; then
+        # if we're here, we found a panic
+        echo "Failing due to panics detected in logs"
+        docker-compose logs --no-color > /tmp/docker-compose.log
+        exit 1
+    fi
+done
