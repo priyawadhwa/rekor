@@ -768,7 +768,7 @@ func TestVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := rekorClient.Server.GetRekorVersion()
+	resp, err := rekorClient.Server.GetRekorVersion(&server.GetRekorVersionParams{})
 	if err != nil {
 		t.Fatal(err)
 	}
