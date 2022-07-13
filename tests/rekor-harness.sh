@@ -13,15 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set -e
 
-if [ -n $SERVER_VERSION ]; then
+if [ -z "$SERVER_VERSION" ]; then
     echo "Please indicate which version of rekor to test against by setting SERVER_VERSION"
     exit 1
 fi
 
 HARNESS_TESTS="TestUploadVerify,TestLogInfo,TestGet,TestSSH,TestJAR,TestAPK,TestIntoto,TestX509,TestEntryUpload"
 
-set -e
 testdir=$(dirname "$0")
 
 
