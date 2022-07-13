@@ -48,6 +48,7 @@ import (
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
 	"github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
+	rserver "github.com/sigstore/rekor/pkg/generated/client/server"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/rekor/pkg/sharding"
 	"github.com/sigstore/rekor/pkg/signer"
@@ -203,7 +204,7 @@ type getOut struct {
 	IntegratedTime  int64
 }
 
-func TestGet(t *testing.T) {
+func TestGetCLI(t *testing.T) {
 	// Create something and add it to the log
 	artifactPath := filepath.Join(t.TempDir(), "artifact")
 	sigPath := filepath.Join(t.TempDir(), "signature.asc")
@@ -757,4 +758,26 @@ func TestTufVerifyUpload(t *testing.T) {
 
 	out = runCli(t, "search", "--public-key", rootPath, "--pki-format", "tuf")
 	outputContains(t, out, uuid)
+}
+
+func TestVersion(t *testing.T) {
+	version := os.Getenv("SERVER_VERSION")
+	if version == "" {
+		t.Skip("This test only runs as part of the test harness to confirm the rekor server version")
+	}
+	rekorClient, err := client.GetRekorClient(rekorServer())
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := rekorClient.Server.GetRekorVersion(&rserver.GetRekorVersionParams{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.GetPayload() == nil {
+		t.Fatal("didn't get version from server")
+	}
+	got := resp.GetPayload().Version
+	if swag.StringValue(got) != version {
+		t.Fatalf("incorrect version: got %s expected %s", swag.StringValue(got), version)
+	}
 }
