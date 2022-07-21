@@ -61,28 +61,24 @@ function run_tests () {
 
 
     go clean -testcache
-    for test in $HARNESS_TESTS
-    do
-        if ! REKORTMPDIR=$REKORTMPDIR go test -run $test -v -tags=e2e ./tests/ > logs ; then 
-            cat logs
-            docker-compose logs --no-color > /tmp/docker-compose.log
-            exit 1
-        fi
-        if docker-compose logs --no-color | grep -q "panic: runtime error:" ; then
-            # if we're here, we found a panic
-            echo "Failing due to panics detected in logs"
-            docker-compose logs --no-color > /tmp/docker-compose.log
-            exit 1
-        fi
-    done
+    if ! REKORTMPDIR=$REKORTMPDIR go test -run TestHarness -v -tags=e2e ./tests/ ; then 
+        docker-compose logs --no-color > /tmp/docker-compose.log
+        exit 1
+    fi
+    if docker-compose logs --no-color | grep -q "panic: runtime error:" ; then
+        # if we're here, we found a panic
+        echo "Failing due to panics detected in logs"
+        docker-compose logs --no-color > /tmp/docker-compose.log
+        exit 1
+    fi
 }
 
 # Get last 3 server versions
 git fetch origin
-VERSIONS=$(git tag --sort=-version:refname | head -n 3 | tac)
+NUM_VERSIONS_TO_TEST=3
+VERSIONS=$(git tag --sort=-version:refname | head -n $NUM_VERSIONS_TO_TEST | tac)
 echo $VERSIONS
 
-HARNESS_TESTS="TestUploadVerify TestLogInfo TestGetCLI TestSSH TestJAR TestAPK TestIntoto TestX509 TestEntryUpload"
 
 for server_version in $VERSIONS 
 do
@@ -99,5 +95,13 @@ do
         echo "======================================================="
     done
 done
+
+# Since we add two entries to the log, once all tests are run we should have 2*($NUM_VERSIONS_TO_TEST^2) entries
+actual=$(rekor-cli loginfo --rekor_server http://localhost:3000 --format json | jq -r .ActiveTreeSize)
+expected=$((2*$NUM_VERSIONS_TO_TEST*$NUM_VERSIONS_TO_TEST))
+if [[ ! "$expected" == "$actual" ]]; then
+    echo "ERROR: Log had $actual entries instead of expected $expected"
+    exit 1
+fi
 
 echo "Harness testing successful :)"
