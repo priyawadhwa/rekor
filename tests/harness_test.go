@@ -198,7 +198,7 @@ func TestHarnessGetAllEntriesLogIndex(t *testing.T) {
 }
 
 func activeTreeSize(t *testing.T) int {
-	out := runCliStdout(t, "loginfo", "--format", "json")
+	out := runCliStdout(t, "loginfo", "--format", "json", "--store_tree_state", "false")
 	t.Log(string(out))
 	var s struct {
 		ActiveTreeSize int

@@ -15,6 +15,8 @@
 # limitations under the License.
 set -e
 
+TREE_ID=""
+
 function start_server () {
     server_version=$1
     current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -22,12 +24,19 @@ function start_server () {
     if [ $(docker-compose ps | grep -c "(healthy)") == 0 ]; then
         echo "starting services with version $server_version"
         docker-compose up -d --build
+        sleep 30
+        TREE_ID=$(rekor-cli loginfo --format json --rekor_server http://localhost:3000 --store_tree_state=false | jq -r .TreeID)
     else
         echo "turning down rekor and restarting at version $server_version"
         docker stop $(docker ps --filter name=rekor-server --format {{.ID}})
+        
+        # Replace log in docker-compose.yml with the Tree ID we want
+        search="# Uncomment this for production logging"
+        replace="\"--trillian_log_server.tlog_id=$TREE_ID\","
+        sed -i '' "s/$search/$replace/" docker-compose.yml
+
         docker-compose up -d --build rekor-server
     fi
-    git checkout $current_branch
 
     count=0
     echo -n "waiting up to 60 sec for system to start"
@@ -42,6 +51,8 @@ function start_server () {
             let 'count+=1'
         fi
     done
+    git checkout $server_version .
+    git checkout $current_branch
     echo
 }
 
@@ -97,7 +108,7 @@ do
 done
 
 # Since we add two entries to the log, once all tests are run we should have 2*($NUM_VERSIONS_TO_TEST^2) entries
-actual=$(rekor-cli loginfo --rekor_server http://localhost:3000 --format json | jq -r .ActiveTreeSize)
+actual=$(rekor-cli loginfo --rekor_server http://localhost:3000 --format json --store_tree_state=false | jq -r .ActiveTreeSize)
 expected=$((2*$NUM_VERSIONS_TO_TEST*$NUM_VERSIONS_TO_TEST))
 if [[ ! "$expected" == "$actual" ]]; then
     echo "ERROR: Log had $actual entries instead of expected $expected"
