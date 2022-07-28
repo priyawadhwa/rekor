@@ -115,7 +115,8 @@ do
 done
 
 # Since we add two entries to the log, once all tests are run we should have 2*($NUM_VERSIONS_TO_TEST^2) entries
-actual=$(rekor-cli loginfo --rekor_server http://localhost:3000 --format json --store_tree_state=false | jq -r .ActiveTreeSize)
+make rekor-cli
+actual=$(./rekor-cli loginfo --rekor_server http://localhost:3000 --format json --store_tree_state=false | jq -r .ActiveTreeSize)
 expected=$((2*$NUM_VERSIONS_TO_TEST*$NUM_VERSIONS_TO_TEST))
 if [[ ! "$expected" == "$actual" ]]; then
     echo "ERROR: Log had $actual entries instead of expected $expected"
