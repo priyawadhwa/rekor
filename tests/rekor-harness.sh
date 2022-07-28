@@ -71,6 +71,7 @@ function run_tests () {
     touch $REKORTMPDIR.rekor.yaml
     trap "rm -rf $REKORTMPDIR" EXIT
 
+    stat tests/harness_test.go
 
     go clean -testcache
     if ! REKORTMPDIR=$REKORTMPDIR go test -run TestHarness -v -tags=e2e ./tests/ ; then 
