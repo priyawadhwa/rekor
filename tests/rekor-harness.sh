@@ -61,7 +61,7 @@ function build_cli () {
     cli_version=$1
     current_branch=$(git rev-parse --abbrev-ref HEAD)
     git checkout $cli_version
-    go build -o rekor-cli ./cmd/rekor-cli
+    make rekor-cli
     git checkout $current_branch
 }
 
