@@ -44,6 +44,7 @@ function start_server () {
     do
         if [ $count -eq 6 ]; then
             echo "! timeout reached"
+            cat docker-compose.yml
             docker-compose logs --no-color > /tmp/docker-compose.log
             exit 1
         else
