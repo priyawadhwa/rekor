@@ -25,6 +25,7 @@ function start_server () {
         echo "starting services with version $server_version"
         docker-compose up -d --build
         sleep 30
+        make rekor-cli
         export TREE_ID=$(./rekor-cli loginfo --format json --rekor_server http://localhost:3000 --store_tree_state=false | jq -r .TreeID)
         echo "Tree ID:  $TREE_ID"
     else
