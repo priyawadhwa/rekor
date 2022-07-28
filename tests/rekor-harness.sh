@@ -26,9 +26,11 @@ function start_server () {
         docker-compose up -d --build
         sleep 30
         TREE_ID=$(rekor-cli loginfo --format json --rekor_server http://localhost:3000 --store_tree_state=false | jq -r .TreeID)
+        echo "Tree ID:  $TREE_ID"
     else
         echo "turning down rekor and restarting at version $server_version"
         docker stop $(docker ps --filter name=rekor-server --format {{.ID}})
+        echo "Tree ID:  $TREE_ID"
         
         # Replace log in docker-compose.yml with the Tree ID we want
         search="# Uncomment this for production logging"
