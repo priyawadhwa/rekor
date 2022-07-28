@@ -33,7 +33,7 @@ function start_server () {
         # Replace log in docker-compose.yml with the Tree ID we want
         search="# Uncomment this for production logging"
         replace="\"--trillian_log_server.tlog_id=$TREE_ID\","
-        sed -i "s/$search/$replace/" docker-compose.yml
+        sed -i '' "s/$search/$replace/" docker-compose.yml
 
         docker-compose up -d --build rekor-server
     fi
@@ -62,6 +62,7 @@ function build_cli () {
     current_branch=$(git rev-parse --abbrev-ref HEAD)
     git checkout $cli_version
     make rekor-cli
+    git checkout $cli_version .
     git checkout $current_branch
 }
 
