@@ -55,6 +55,7 @@ func run(t *testing.T, stdin, cmd string, arg ...string) string {
 		// ensure that we use a clean state.json file for each run
 		c.Env = append(c.Env, "HOME="+os.Getenv("REKORTMPDIR"))
 	}
+	t.Log(c.Args)
 	b, err := c.CombinedOutput()
 	if err != nil {
 		t.Log(string(b))

@@ -16,6 +16,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
@@ -65,7 +66,6 @@ jobs:
 
   e2e:
     runs-on: ubuntu-20.04
-    needs: build
 
     steps:
       - name: download minisign
