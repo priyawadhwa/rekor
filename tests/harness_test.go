@@ -153,7 +153,9 @@ func TestHarnessAddIntoto(t *testing.T) {
 	out := runCli(t, "upload", "--artifact", attestationPath, "--type", "intoto", "--public-key", pubKeyPath)
 	outputContains(t, out, "Created entry at")
 	uuid := getUUIDFromUploadOutput(t, out)
+	t.Log("Got uuid", uuid)
 	logIndex := getLogIndexFromUploadOutput(t, out)
+	t.Log("got log index", logIndex)
 
 	out = runCli(t, "get", "--uuid", uuid, "--format=json")
 	g := getOut{}
