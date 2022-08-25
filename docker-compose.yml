@@ -78,9 +78,7 @@ services:
     depends_on:
       - mysql
   rekor-server:
-    build:
-      context: .
-      target: "deploy"
+    image: ttl.sh/priya/rekor
     command: [
       "rekor-server",
       "serve",
