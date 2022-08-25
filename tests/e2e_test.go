@@ -525,8 +525,10 @@ func TestIntoto(t *testing.T) {
 
 	// If we do it twice, it should already exist
 	out := runCli(t, "upload", "--artifact", attestationPath, "--type", "intoto", "--public-key", pubKeyPath)
+	t.Log(out)
 	outputContains(t, out, "Created entry at")
 	uuid := getUUIDFromUploadOutput(t, out)
+	t.Log("Got uuid: ", uuid)
 
 	out = runCli(t, "get", "--uuid", uuid, "--format=json")
 	g := getOut{}
