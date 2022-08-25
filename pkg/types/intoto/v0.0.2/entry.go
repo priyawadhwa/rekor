@@ -77,13 +77,18 @@ func (v V002Entry) IndexKeys() ([]string, error) {
 	}
 
 	for _, sig := range v.IntotoObj.Content.Envelope.Signatures {
-		keyHash := sha256.Sum256(sig.PublicKey)
-		result = append(result, "sha256:"+hex.EncodeToString(keyHash[:]))
-
 		keyObj, err := x509.NewPublicKey(bytes.NewReader(sig.PublicKey))
 		if err != nil {
-			return nil, err
+			return result, err
 		}
+
+		canonKey, err := keyObj.CanonicalValue()
+		if err != nil {
+			return result, fmt.Errorf("could not canonicize key: %w", err)
+		}
+
+		keyHash := sha256.Sum256(canonKey)
+		result = append(result, "sha256:"+hex.EncodeToString(keyHash[:]))
 
 		result = append(result, keyObj.Subjects()...)
 	}
@@ -91,11 +96,11 @@ func (v V002Entry) IndexKeys() ([]string, error) {
 	payloadKey := strings.ToLower(fmt.Sprintf("%s:%s", *v.IntotoObj.Content.PayloadHash.Algorithm, *v.IntotoObj.Content.PayloadHash.Value))
 	result = append(result, payloadKey)
 
+	hashkey := strings.ToLower(fmt.Sprintf("%s:%s", *v.IntotoObj.Content.Hash.Algorithm, *v.IntotoObj.Content.Hash.Value))
+	result = append(result, hashkey)
+
 	switch *v.IntotoObj.Content.Envelope.PayloadType {
 	case in_toto.PayloadType:
-
-		hashkey := strings.ToLower(fmt.Sprintf("%s:%s", *v.IntotoObj.Content.Hash.Algorithm, *v.IntotoObj.Content.Hash.Value))
-		result = append(result, hashkey)
 
 		if v.IntotoObj.Content.Envelope.Payload == nil {
 			log.Logger.Info("IntotoObj DSSE payload is empty")
