@@ -11,7 +11,7 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-openapi/errors v0.20.3
 	github.com/go-openapi/loads v0.21.2
-	github.com/go-openapi/runtime v0.24.1
+	github.com/go-openapi/runtime v0.25.0
 	github.com/go-openapi/spec v0.20.7
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/go-openapi/swag v0.22.3
@@ -56,7 +56,13 @@ require (
 
 require golang.org/x/exp v0.0.0-20220823124025-807a23277127
 
-require filippo.io/edwards25519 v1.0.0-rc.1 // indirect
+require (
+	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	go.opentelemetry.io/otel v1.11.1 // indirect
+	go.opentelemetry.io/otel/trace v1.11.1 // indirect
+)
 
 require (
 	cloud.google.com/go v0.103.0 // indirect
